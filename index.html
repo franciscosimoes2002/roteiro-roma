@@ -33,8 +33,6 @@
         <input type="date" id="trip-start" aria-label="Data de início">
         <span class="dash">→</span>
         <span id="trip-end-label">—</span>
-        <button class="linklike" id="btn-day-add" title="Acrescentar um dia">+ dia</button>
-        <button class="linklike" id="btn-day-remove" title="Remover o último dia">− dia</button>
       </div>
     </div>
   </div>
@@ -47,7 +45,9 @@
 
   <div class="topbar-actions">
     <div class="menu-wrap">
-      <button class="btn ghost" id="btn-export" aria-haspopup="true">Exportar ▾</button>
+      <button class="btn ghost" id="btn-export" aria-haspopup="true" aria-label="Exportar">
+        <span class="ico">⤓</span><span class="lbl">Exportar ▾</span>
+      </button>
       <div class="menu" id="menu-export" hidden>
         <button data-export="json">Guardar ficheiro (.json)</button>
         <button data-export="import">Abrir ficheiro (.json)</button>

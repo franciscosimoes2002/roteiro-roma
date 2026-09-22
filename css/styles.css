@@ -30,6 +30,12 @@
 html, body {
   height: 100%;
   margin: 0;
+  max-width: 100%;
+}
+
+/* No telemóvel, 100% conta com a barra de endereço; dvh não conta. */
+@supports (height: 100dvh) {
+  html, body { height: 100dvh; }
 }
 
 body {
@@ -61,10 +67,11 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
   background: linear-gradient(180deg, #1c1815, #161310);
   border-bottom: 1px solid var(--line);
   flex: 0 0 auto;
+  min-width: 0;
   z-index: 40;
 }
 
-.brand { display: flex; align-items: center; gap: .6rem; min-width: 0; }
+.brand { display: flex; align-items: center; gap: .6rem; min-width: 0; flex: 1 1 auto; }
 .brand-mark { font-size: 1.6rem; filter: saturate(1.2); }
 .brand-text { min-width: 0; }
 
@@ -78,6 +85,8 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
   padding: 0;
   width: 15ch;
   max-width: 42vw;
+  min-width: 0;
+  text-overflow: ellipsis;
 }
 .trip-name:hover { border-bottom-color: var(--line); }
 .trip-name:focus { outline: none; border-bottom-color: var(--accent); }
@@ -88,7 +97,12 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
   gap: .45rem;
   font-size: .78rem;
   color: var(--ink-3);
+  min-width: 0;
+  white-space: nowrap;
 }
+/* O campo da data não pode encolher: ficava a mostrar "22/1". Quem cede
+   espaço é o nome da viagem, que tem reticências. */
+.brand-sub input[type="date"] { flex: 0 0 auto; }
 .brand-sub input[type="date"] {
   background: transparent;
   border: 0;
@@ -109,7 +123,7 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
 .stat span { font-family: var(--display); font-size: 1.05rem; display: block; }
 .stat small { color: var(--ink-3); font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; }
 
-.topbar-actions { display: flex; gap: .4rem; align-items: center; }
+.topbar-actions { display: flex; gap: .4rem; align-items: center; flex: 0 0 auto; }
 
 /* ---------- Botões ---------- */
 .btn {
@@ -134,6 +148,9 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
 .btn.block { width: 100%; }
 .btn[disabled] { opacity: .45; cursor: not-allowed; }
 
+#btn-export .ico { display: none; }
+#btn-export .lbl { display: inline; }
+
 .menu-wrap { position: relative; }
 .menu {
   position: absolute; right: 0; top: calc(100% + 6px);
@@ -149,11 +166,15 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
 .menu button:hover { background: var(--accent-soft); color: var(--ink); }
 
 /* ---------- Layout ---------- */
+/* `minmax(0, 1fr)` e não `1fr`: uma coluna `1fr` nunca fica mais estreita
+   do que o seu conteúdo, e por isso a barra de topo e os separadores
+   empurravam a página toda para fora do ecrã do telemóvel. */
 .layout {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: var(--panel-w) 1fr;
+  grid-template-columns: var(--panel-w) minmax(0, 1fr);
   min-height: 0;
+  min-width: 0;
 }
 
 .panel {
@@ -163,6 +184,7 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+  max-width: 100%;
 }
 
 /* ---------- Separadores ---------- */
@@ -172,10 +194,14 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
   padding: .5rem .5rem 0;
   border-bottom: 1px solid var(--line);
   flex: 0 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
-  flex: 1 1 0;
-  min-width: 0;
+  /* crescem para preencher, mas nunca encolhem abaixo do texto:
+     em ecrãs muito estreitos a fila desliza na horizontal */
+  flex: 1 0 auto;
   background: none;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -201,6 +227,7 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
   padding-bottom: .6rem;
   margin-bottom: .3rem;
   scrollbar-width: thin;
+  flex: 0 0 auto;          /* senão é esmagada quando a lista é comprida */
 }
 .day-chip {
   flex: 0 0 auto;
@@ -218,11 +245,19 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
 .day-chip.active { border-color: var(--accent); background: var(--accent-soft); }
 .day-chip.drop-hover { border-color: var(--accent-2); background: #3a2f16; }
 
+.days-tools { display: flex; gap: .3rem; flex: 0 0 auto; align-items: stretch; }
+.day-tool {
+  background: var(--bg-3); border: 1px dashed var(--line);
+  border-radius: 11px; color: var(--ink-3);
+  width: 34px; cursor: pointer; font-size: 1.05rem; line-height: 1;
+}
+.day-tool:hover { border-color: var(--accent); color: var(--accent); }
+
 .day-head {
   display: flex; align-items: flex-start; justify-content: space-between;
-  gap: .5rem; margin: .3rem 0 .5rem;
+  gap: .5rem; margin: .3rem 0 .5rem; flex: 0 0 auto; flex-wrap: wrap;
 }
-.day-head-actions { display: flex; gap: .3rem; }
+.day-head-actions { display: flex; gap: .3rem; flex-wrap: wrap; }
 .day-meta { font-size: .76rem; color: var(--ink-3); margin-top: .15rem; }
 .day-meta .wx { color: var(--accent-2); }
 
@@ -236,7 +271,9 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
 }
 
 /* ---------- Lista do roteiro ---------- */
-.itinerary { list-style: none; margin: 0; padding: 0; flex: 1 1 auto; }
+/* Cresce para empurrar o rodapé para baixo quando o dia é curto, mas nunca
+   encolhe — a encolher, as paragens passavam por cima dos totais. */
+.itinerary { list-style: none; margin: 0; padding: 0; flex: 1 0 auto; }
 
 .stop {
   position: relative;
@@ -283,8 +320,10 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
 .stop.cat-transport .stop-idx { background: #7d6f63; }
 
 .stop-main { min-width: 0; }
-.stop-title { font-weight: 600; font-size: .92rem; display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
-.stop-title .emo { font-size: .95rem; }
+/* Em bloco, e não em flex: com flex o emoji ficava sozinho na primeira
+   linha sempre que o nome partia em duas. */
+.stop-title { font-weight: 600; font-size: .92rem; }
+.stop-title .emo { font-size: .95rem; margin-right: .2rem; }
 .stop-sub { font-size: .76rem; color: var(--ink-3); margin-top: .12rem; display: flex; gap: .5rem; flex-wrap: wrap; }
 .stop-sub .pill {
   background: var(--bg); border: 1px solid var(--line);
@@ -316,7 +355,7 @@ h3 { font-size: .98rem; margin: 0 0 .5rem; }
   padding: 1.6rem 1rem; text-align: center; color: var(--ink-3); font-size: .85rem;
 }
 
-.day-foot { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--line-soft); }
+.day-foot { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--line-soft); flex: 0 0 auto; }
 .day-totals { display: flex; gap: .8rem; font-size: .76rem; color: var(--ink-3); margin-top: .5rem; flex-wrap: wrap; }
 .day-totals b { color: var(--ink-2); font-weight: 600; }
 
@@ -668,19 +707,31 @@ body.is-offline .btn.ghost.icon[title*="mapa"] { opacity: .5; }
   :root { --panel-w: 100%; }
   .only-mobile { display: inline-block; }
   .topbar-stats { display: none; }
-  .layout { grid-template-columns: 1fr; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
   .map-area { display: none; }
   body.show-map .panel { display: none; }
   body.show-map .map-area { display: block; }
-  .trip-name { width: 11ch; }
+  .trip-name { width: 11ch; max-width: 34vw; }
+
+  /* Num ecrã estreito não cabe tudo: o Exportar fica só com o ícone. */
+  #btn-export .ico { display: inline; font-size: 1.05rem; }
+  #btn-export .lbl { display: none; }
 
   /* respeitar o entalhe e a barra do telemóvel */
-  .topbar { padding-top: max(.55rem, env(safe-area-inset-top)); }
+  .topbar { gap: .5rem; padding: .5rem .6rem; }
+  .topbar { padding-top: max(.5rem, env(safe-area-inset-top)); }
   .tabpane { padding-bottom: max(.85rem, env(safe-area-inset-bottom)); }
 
+  /* a data de fim já aparece nos cartões dos dias; na barra de topo
+     colidia com o botão Exportar */
+  .brand-sub .dash, #trip-end-label { display: none; }
+
   /* alvos maiores para o dedo */
-  .mini { min-width: 34px; min-height: 30px; font-size: .95rem; }
-  .stop-actions { flex-direction: row; gap: .1rem; }
+  .mini { min-width: 32px; min-height: 30px; font-size: .95rem; }
+  .stop-actions { flex-direction: row; gap: 0; }
+  /* "ver no mapa da app" não faz sentido aqui: o mapa está escondido e o
+     ➤ abre a app do Google Maps, que é melhor para andar na rua */
+  .stop-actions [data-act="map"] { display: none; }
   .stop { padding: .7rem .5rem; }
   .stop-idx { width: 32px; height: 32px; }
   .btn.tiny { padding: .4rem .6rem; }

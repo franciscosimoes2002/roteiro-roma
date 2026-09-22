@@ -18,10 +18,17 @@ const cat = (k) => CATEGORIES[k] || CATEGORIES.other;
 const cur = () => S.state.settings.currency || '€';
 
 const WEEKDAYS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const fmtDate = (iso) => {
   if (!iso) return 'sem data';
   const d = new Date(iso + 'T12:00:00');
-  return `${WEEKDAYS[d.getDay()]}, ${d.getDate()} ${['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][d.getMonth()]}`;
+  return `${WEEKDAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+};
+/** Versão curta, para caber na barra de topo de um telemóvel. */
+const fmtDateShort = (iso) => {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T12:00:00');
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 };
 const fmtMoney = (n) => `${Math.round(n * 100) / 100} ${cur()}`;
 const fmtDur = (min) => (min >= 60 ? `${Math.floor(min / 60)}h${min % 60 ? String(min % 60).padStart(2, '0') : ''}` : `${min} min`);
@@ -178,7 +185,7 @@ function renderTopbar() {
   $('#stat-days').textContent = S.days().length;
   $('#stat-items').textContent = S.totalItems();
   $('#stat-cost').textContent = fmtMoney(S.totalCost());
-  $('#trip-end-label').textContent = fmtDate(S.endDate());
+  $('#trip-end-label').textContent = fmtDateShort(S.endDate());
 }
 
 function renderDaysStrip() {
@@ -196,6 +203,21 @@ function renderDaysStrip() {
     b.onclick = () => { if (!justDragged) S.setActiveDay(i); };
     strip.appendChild(b);
   });
+
+  // acrescentar / remover dias fica junto dos dias: na barra de topo não
+  // cabia num telemóvel
+  const tools = document.createElement('div');
+  tools.className = 'days-tools';
+  tools.innerHTML = `<button class="day-tool" id="btn-day-add" title="Acrescentar um dia">+</button>`
+    + (S.days().length > 1
+      ? `<button class="day-tool" id="btn-day-remove" title="Remover o último dia">−</button>` : '');
+  tools.querySelector('#btn-day-add').onclick = () => S.addDay();
+  tools.querySelector('#btn-day-remove')?.addEventListener('click', () => {
+    const last = S.days().at(-1);
+    if (last.items.length && !confirm(`O dia ${S.days().length} tem ${last.items.length} paragens. Apagar mesmo assim?`)) return;
+    S.removeLastDay();
+  });
+  strip.appendChild(tools);
 }
 
 function renderDayHead() {
@@ -1287,11 +1309,7 @@ function wireEvents() {
   // viagem
   $('#trip-name').oninput = (e) => { S.state.trip.name = e.target.value; S.save(); };
   $('#trip-start').onchange = (e) => { S.state.trip.start = e.target.value; S.emit('days'); loadWeather(); };
-  $('#btn-day-add').onclick = () => S.addDay();
-  $('#btn-day-remove').onclick = () => {
-    if (S.activeDay().items.length && !confirm('O último dia tem paragens. Apagar mesmo assim?')) return;
-    S.removeLastDay();
-  };
+  // (os botões de acrescentar/remover dia são criados em renderDaysStrip)
 
   // dia
   $('#btn-day-note').onclick = () => showDayNote($('#day-note').hidden);
