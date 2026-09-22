@@ -33,25 +33,47 @@ navegadores recusam-se a instalar um *service worker* fora disso.
 
 #### Vercel (recomendado)
 
-Já está tudo configurado no `vercel.json`. Abre um terminal na pasta `AppRoteiro`
-e corre:
+Já está tudo configurado: o repositório git existe, com o primeiro commit feito,
+e o `vercel.json` trata dos cabeçalhos.
+
+**1. Criar o repositório no GitHub** — <https://github.com/new>:
+
+- Nome: `roteiro-roma`
+- **Private** — o roteiro e a checklist são pessoais, e a Vercel publica
+  repositórios privados na mesma no plano gratuito
+- **Não** marques nada em *Initialize this repository* (nem README, nem
+  `.gitignore`, nem licença) — já existem aqui e dariam conflito
+
+**2. Enviar o código** — num terminal na pasta `AppRoteiro`:
 
 ```
-npx vercel --prod
+git remote add origin https://github.com/O-TEU-UTILIZADOR/roteiro-roma.git
+git push -u origin main
 ```
 
-Da primeira vez pede-te para entrar (abre o navegador) e faz quatro perguntas —
-aceita todas as respostas por omissão, incluindo **"Want to modify these
-settings?" → No**. Não há nada para compilar.
+Da primeira vez abre o navegador para entrares na conta do GitHub.
 
-No fim escreve o endereço, tipo `https://roteiro-roma.vercel.app`.
+**3. Ligar à Vercel** — <https://vercel.com/new> → *Import Git Repository* →
+escolhe `roteiro-roma` → **Deploy**. Não mexas em mais nada: não há nada para
+compilar e a Vercel serve os ficheiros como estão.
 
-> **Usa sempre `--prod`.** Sem essa opção, cada publicação recebe um endereço
-> novo e aleatório, e a chave do Google — que vais restringir ao endereço fixo —
-> deixa de funcionar.
+Em menos de um minuto tens `https://roteiro-roma.vercel.app`.
 
-Para atualizar depois de mexeres nos ficheiros, é o mesmo comando outra vez. A
-app avisa no telemóvel que há versão nova.
+**A partir daí, publicar é só isto:**
+
+```
+git add -A
+git commit -m "o que mudaste"
+git push
+```
+
+Cada envio para o ramo `main` republica sozinho, e a app avisa no telemóvel que
+há versão nova.
+
+> Ramos que não sejam o `main` recebem endereços de pré-visualização temporários.
+> Como a chave do Google vai ficar restringida ao endereço fixo, o mapa só
+> funciona no endereço de produção — trabalha no `main` e não tens com que te
+> preocupar.
 
 #### Depois de publicar
 
@@ -65,9 +87,9 @@ app avisa no telemóvel que há versão nova.
 
 A partir daí abre como uma app normal, em ecrã inteiro, e **funciona sem rede**.
 
-> **Alternativa sem terminal:** <https://app.netlify.com/drop> — entra, arrasta
-> a pasta inteira e recebes o endereço. Funciona igual; o `vercel.json` é
-> simplesmente ignorado.
+> **Sem passar pelo GitHub:** `npx vercel --prod` dentro da pasta publica
+> diretamente a partir do computador. Funciona, mas obriga a repetir o comando a
+> cada alteração, e sem o `--prod` cada publicação recebe um endereço diferente.
 
 ## Levar o roteiro do computador para o telemóvel
 
@@ -257,7 +279,8 @@ vercel.json       cabeçalhos para a publicação (cache do service worker)
 | No telemóvel não funciona sem rede | Estás pelo `192.168...`; o offline só existe em HTTPS — publica a app |
 | Não aparece a opção de instalar no telemóvel | Idem: só em HTTPS, e tem de se abrir o endereço publicado |
 | Publicaste e o mapa deixou de aparecer | Falta acrescentar o novo endereço às restrições da chave Google |
-| Cada publicação dá um endereço diferente | Faltou o `--prod` no `npx vercel --prod` |
+| Cada publicação dá um endereço diferente | Estás num ramo que não é o `main` (ou faltou `--prod`, se publicaste pelo terminal) |
+| `git push` recusado por "rejected" | Marcaste README ou .gitignore ao criar o repositório no GitHub. Cria outro, vazio |
 | Mudaste os ficheiros e o telemóvel mostra a versão antiga | Espera o aviso de "versão nova", ou fecha e reabre a app |
 
 Boa viagem. 🏛️
