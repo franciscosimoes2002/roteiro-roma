@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roteiro Roma</title>
+<meta name="description" content="Planeador de viagem a Roma: roteiro dia a dia, mapa com trajetos 2D/3D, pesquisa de restaurantes e monumentos, bilhetes e assistente de IA.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1c1815">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Roma">
+<link rel="icon" href="icons/favicon-64.png" sizes="64x64">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="offline-bar" class="offline-bar" hidden>
+  Sem ligação — o roteiro, os bilhetes e a comida funcionam. O mapa e a IA voltam quando houver rede.
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">🏛️</span>
+    <div class="brand-text">
+      <input id="trip-name" class="trip-name" value="Roma a dois" aria-label="Nome da viagem">
+      <div class="brand-sub">
+        <input type="date" id="trip-start" aria-label="Data de início">
+        <span class="dash">→</span>
+        <span id="trip-end-label">—</span>
+        <button class="linklike" id="btn-day-add" title="Acrescentar um dia">+ dia</button>
+        <button class="linklike" id="btn-day-remove" title="Remover o último dia">− dia</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="topbar-stats">
+    <div class="stat"><span id="stat-days">0</span><small>dias</small></div>
+    <div class="stat"><span id="stat-items">0</span><small>paragens</small></div>
+    <div class="stat"><span id="stat-cost">0 €</span><small>orçamento</small></div>
+  </div>
+
+  <div class="topbar-actions">
+    <div class="menu-wrap">
+      <button class="btn ghost" id="btn-export" aria-haspopup="true">Exportar ▾</button>
+      <div class="menu" id="menu-export" hidden>
+        <button data-export="json">Guardar ficheiro (.json)</button>
+        <button data-export="import">Abrir ficheiro (.json)</button>
+        <button data-export="ics">Calendário (.ics)</button>
+        <button data-export="print">Imprimir / PDF</button>
+      </div>
+    </div>
+    <button class="btn ghost icon" id="btn-settings" title="Definições e chaves de API" aria-label="Definições">⚙</button>
+    <button class="btn ghost icon only-mobile" id="btn-toggle-map" title="Ver mapa" aria-label="Ver mapa">🗺</button>
+  </div>
+</header>
+
+<div class="layout" id="layout">
+
+  <!-- ============ PAINEL LATERAL ============ -->
+  <aside class="panel" id="panel">
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="roteiro" role="tab">Roteiro</button>
+      <button class="tab" data-tab="explorar" role="tab">Explorar</button>
+      <button class="tab" data-tab="comida" role="tab">Comida</button>
+      <button class="tab" data-tab="bilhetes" role="tab">Bilhetes</button>
+      <button class="tab" data-tab="ia" role="tab">IA ✨</button>
+    </nav>
+
+    <!-- ---- ROTEIRO ---- -->
+    <section class="tabpane active" id="pane-roteiro">
+      <div class="days-strip" id="days-strip"></div>
+
+      <div class="day-head">
+        <div>
+          <h2 id="day-title">Dia 1</h2>
+          <div class="day-meta" id="day-meta"></div>
+        </div>
+        <div class="day-head-actions">
+          <button class="btn tiny" id="btn-day-maps" title="Abrir o percurso do dia na app Google Maps">Maps ↗</button>
+          <button class="btn tiny ghost" id="btn-optimize" title="Reordenar as paragens para minimizar deslocações">Otimizar</button>
+          <button class="btn tiny ghost" id="btn-day-note" title="Nota do dia">Nota</button>
+        </div>
+      </div>
+
+      <div class="day-note" id="day-note" hidden></div>
+
+      <ul class="itinerary" id="itinerary"></ul>
+
+      <div class="day-foot">
+        <button class="btn block" id="btn-add-manual">+ Adicionar paragem manualmente</button>
+        <div class="day-totals" id="day-totals"></div>
+      </div>
+    </section>
+
+    <!-- ---- EXPLORAR ---- -->
+    <section class="tabpane" id="pane-explorar">
+      <div class="search-bar">
+        <input id="search-input" placeholder="Pesquisar em Roma: restaurantes, Coliseu, gelato…" autocomplete="off">
+        <button class="btn" id="btn-search">Procurar</button>
+      </div>
+      <div class="chips" id="search-chips">
+        <button class="chip" data-q="restaurantes tradicionais romanos" data-type="restaurant">🍝 Restaurantes</button>
+        <button class="chip" data-q="pizzeria" data-type="pizza_restaurant">🍕 Pizza</button>
+        <button class="chip" data-q="gelateria artesanal" data-type="ice_cream_shop">🍨 Gelato</button>
+        <button class="chip" data-q="café pastelaria" data-type="cafe">☕ Cafés</button>
+        <button class="chip" data-q="bar cocktails vista" data-type="bar">🍸 Bares</button>
+        <button class="chip" data-q="monumentos históricos" data-type="tourist_attraction">🏛️ Monumentos</button>
+        <button class="chip" data-q="museus" data-type="museum">🖼️ Museus</button>
+        <button class="chip" data-q="basílicas e igrejas" data-type="church">⛪ Igrejas</button>
+        <button class="chip" data-q="miradouros e vistas panorâmicas" data-type="tourist_attraction">🌇 Vistas</button>
+        <button class="chip" data-q="parques e jardins" data-type="park">🌳 Parques</button>
+        <button class="chip" data-q="mercados" data-type="market">🧺 Mercados</button>
+        <button class="chip" data-q="lojas e compras" data-type="shopping_mall">🛍️ Compras</button>
+      </div>
+      <div class="search-opts">
+        <label class="switch-lite"><input type="checkbox" id="search-near-map"> Só perto da zona visível</label>
+        <span class="muted" id="search-count"></span>
+      </div>
+      <div class="results" id="results"></div>
+
+      <div class="saved-block">
+        <h3>⭐ Guardados <span class="muted" id="saved-count"></span></h3>
+        <div class="results compact" id="saved-list"></div>
+      </div>
+    </section>
+
+    <!-- ---- COMIDA ---- -->
+    <section class="tabpane" id="pane-comida">
+      <div class="food-head">
+        <div>
+          <h2>Checklist de comida</h2>
+          <div class="food-progress-text" id="food-progress-text"></div>
+        </div>
+        <button class="btn tiny ghost" id="btn-food-reset" title="Desmarcar tudo">limpar</button>
+      </div>
+      <div class="bar"><span id="food-bar"></span></div>
+
+      <div class="food-phrase" id="food-phrase"></div>
+
+      <div class="food-controls">
+        <input id="food-search" placeholder="Procurar prato…" autocomplete="off">
+        <div class="chips" id="food-filters">
+          <button class="chip active" data-filter="all">Tudo</button>
+          <button class="chip" data-filter="both">🌿 Para os dois</button>
+          <button class="chip" data-filter="todo">Por comer</button>
+          <button class="chip" data-filter="done">Já comido</button>
+        </div>
+      </div>
+
+      <div id="food-list"></div>
+
+      <div class="food-extra">
+        <h3>Lista rápida do Francisco</h3>
+        <p class="muted small">Tudo o que podes pedir sem pensar.</p>
+        <div class="food-quick" id="food-quick"></div>
+      </div>
+
+      <div class="food-extra">
+        <h3>O que evitar</h3>
+        <ul class="food-avoid" id="food-avoid"></ul>
+      </div>
+    </section>
+
+    <!-- ---- BILHETES ---- -->
+    <section class="tabpane" id="pane-bilhetes">
+      <h3>As vossas reservas</h3>
+      <p class="muted small">Tudo o que tem hora marcada ou código de reserva aparece aqui, por ordem cronológica.</p>
+      <div id="bookings-list" class="bookings"></div>
+
+      <h3 class="mt">Onde comprar (e quando)</h3>
+      <p class="muted small">Atrações de Roma que praticamente exigem marcação antecipada.</p>
+      <div id="ticket-guide" class="ticket-guide"></div>
+    </section>
+
+    <!-- ---- IA ---- -->
+    <section class="tabpane" id="pane-ia">
+      <div class="ai-quick">
+        <button class="chip" data-prompt="Planeia-me os dias todos com um bom equilíbrio entre monumentos, comida e descanso. Somos duas pessoas, gostamos de história e de comer bem, e não queremos correr.">🪄 Planear a viagem toda</button>
+        <button class="chip" data-prompt="Olha para o dia que está selecionado e reorganiza as horas de forma realista, contando com o tempo de deslocação a pé e com as filas.">⏱️ Acertar os horários do dia</button>
+        <button class="chip" data-prompt="Sugere-me jantares românticos perto das paragens deste dia, com preços e o motivo da escolha. Acrescenta os melhores ao roteiro.">🍷 Jantares românticos</button>
+        <button class="chip" data-prompt="Este dia está muito cheio? Tira o que for a mais e passa para outro dia mais leve.">⚖️ Equilibrar os dias</button>
+        <button class="chip" data-prompt="Diz-me o que tenho de reservar já, com que antecedência, e em que sites oficiais.">🎟️ O que reservar já</button>
+        <button class="chip" data-prompt="Olha para a checklist de comida e diz-me onde comer os pratos que ainda faltam, encaixados nos dias e nas zonas do roteiro. Acrescenta os restaurantes ao roteiro e diz em cada um que pratos da lista se riscam.">🍝 Riscar a lista de comida</button>
+        <button class="chip" data-prompt="Sugere um dia alternativo se estiver a chover.">🌧️ Plano B com chuva</button>
+      </div>
+      <div class="ai-chat" id="ai-chat"></div>
+      <div class="ai-pending" id="ai-pending" hidden></div>
+      <div class="ai-input">
+        <textarea id="ai-text" rows="2" placeholder="Diz o que queres: &quot;dia 2 mais calmo, com o Vaticano de manhã e jantar em Trastevere&quot;"></textarea>
+        <button class="btn" id="btn-ai-send">Enviar</button>
+      </div>
+      <div class="ai-foot muted small">
+        Contexto enviado: roteiro atual, guardados e definições da viagem.
+        <button class="linklike" id="btn-ai-clear">limpar conversa</button>
+      </div>
+    </section>
+  </aside>
+
+  <!-- ============ MAPA ============ -->
+  <main class="map-area" id="map-area">
+    <div id="map"></div>
+    <div id="map3d-host" hidden></div>
+
+    <div class="map-overlay top-left">
+      <div class="seg" id="view-seg">
+        <button class="seg-btn active" data-view="2d">2D</button>
+        <button class="seg-btn" data-view="3d">3D</button>
+        <button class="seg-btn" data-view="p3d" id="btn-p3d" title="Mapa fotorrealista 3D">3D+</button>
+      </div>
+      <div class="seg" id="mode-seg">
+        <button class="seg-btn active" data-mode="WALKING" title="A pé">🚶</button>
+        <button class="seg-btn" data-mode="TRANSIT" title="Transportes">🚇</button>
+        <button class="seg-btn" data-mode="DRIVING" title="Carro / táxi">🚗</button>
+        <button class="seg-btn" data-mode="BICYCLING" title="Bicicleta">🚲</button>
+      </div>
+    </div>
+
+    <div class="map-overlay top-right">
+      <button class="round-btn" id="btn-fit" title="Enquadrar o dia">⤢</button>
+      <button class="round-btn" id="btn-rot-l" title="Rodar para a esquerda">⟲</button>
+      <button class="round-btn" id="btn-rot-r" title="Rodar para a direita">⟳</button>
+    </div>
+
+    <div class="route-summary" id="route-summary" hidden></div>
+
+    <div class="map-missing" id="map-missing">
+      <div class="map-missing-card">
+        <h3>Mapa por ativar</h3>
+        <p>Cola a tua chave da <strong>Google Maps JavaScript API</strong> nas definições para veres o mapa, os trajetos e a pesquisa de sítios.</p>
+        <p class="muted small">Sem chave, o roteiro, os bilhetes e a exportação continuam a funcionar.</p>
+        <button class="btn" id="btn-open-settings-2">Abrir definições</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ DIÁLOGOS ============ -->
+<dialog id="dlg-settings" class="dlg">
+  <form method="dialog" class="dlg-inner">
+    <h2>Definições</h2>
+
+    <fieldset>
+      <legend>Google Maps</legend>
+      <label>Chave da API
+        <input id="set-gmaps-key" type="password" placeholder="AIza…" autocomplete="off">
+      </label>
+      <p class="hint">Ativa: Maps JavaScript API, Places API (New), Directions API. Restringe a chave ao teu domínio/localhost.</p>
+      <div class="row">
+        <label>Map ID (vetorial, para 3D)
+          <input id="set-map-id" placeholder="DEMO_MAP_ID">
+        </label>
+        <label>Versão
+          <select id="set-gmaps-version">
+            <option value="weekly">weekly</option>
+            <option value="beta">beta (3D fotorrealista)</option>
+            <option value="alpha">alpha</option>
+          </select>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Assistente de IA</legend>
+
+      <label>Fornecedor
+        <select id="set-ai-provider">
+          <option value="openai">OpenAI</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+        </select>
+      </label>
+
+      <!-- OpenAI -->
+      <div id="ai-openai">
+        <label>Chave da API OpenAI
+          <input id="set-openai-key" type="password" placeholder="sk-…" autocomplete="off">
+        </label>
+        <label>Modelo
+          <div class="row">
+            <select id="set-openai-model" style="flex:1">
+              <option value="">— carrega a lista —</option>
+            </select>
+            <button class="btn ghost" type="button" id="btn-load-models" style="flex:0 0 auto;margin-top:.22rem">Carregar modelos</button>
+          </div>
+        </label>
+        <p class="hint" id="model-hint">A lista vem da tua conta, por isso só aparecem modelos a que tens mesmo acesso. Se deixares vazio, a app escolhe o melhor sozinha.</p>
+      </div>
+
+      <!-- Anthropic -->
+      <div id="ai-anthropic" hidden>
+        <label>Chave da API Anthropic
+          <input id="set-ai-key" type="password" placeholder="sk-ant-…" autocomplete="off">
+        </label>
+        <div class="row">
+          <label>Modelo
+            <select id="set-ai-model">
+              <option value="claude-opus-5">Claude Opus 5 (melhor)</option>
+              <option value="claude-sonnet-5">Claude Sonnet 5 (mais barato)</option>
+              <option value="claude-haiku-4-5">Claude Haiku 4.5 (rápido)</option>
+            </select>
+          </label>
+          <label>Esforço
+            <select id="set-ai-effort">
+              <option value="medium">médio</option>
+              <option value="high" selected>alto</option>
+              <option value="low">baixo</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <p class="hint warn">A chave fica guardada neste navegador e é enviada diretamente para a API. Usa isto só no teu computador — não publiques a app online com a chave lá dentro.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>A viagem</legend>
+      <div class="row">
+        <label>Viajantes
+          <input id="set-travelers" type="number" min="1" max="10" value="2">
+        </label>
+        <label>Moeda
+          <input id="set-currency" value="€" maxlength="3">
+        </label>
+      </div>
+      <label>Alojamento / base (endereço ou zona)
+        <input id="set-home" placeholder="Ex.: Via del Corso, Roma">
+      </label>
+      <label>Preferências para a IA
+        <textarea id="set-prefs" rows="3" placeholder="Ex.: gostamos de história antiga, comida sem pressas, detestamos filas, um jantar especial a meio da viagem…"></textarea>
+      </label>
+    </fieldset>
+
+    <div class="dlg-actions">
+      <button class="btn ghost danger" id="btn-reset" type="button">Apagar tudo</button>
+      <span class="spacer"></span>
+      <button class="btn" value="save" id="btn-save-settings">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-item" class="dlg">
+  <form method="dialog" class="dlg-inner">
+    <h2 id="item-dlg-title">Paragem</h2>
+    <label>Nome <input id="it-name" required></label>
+    <div class="row">
+      <label>Categoria
+        <select id="it-category"></select>
+      </label>
+      <label>Dia
+        <select id="it-day"></select>
+      </label>
+    </div>
+    <div class="row">
+      <label>Hora <input id="it-time" type="time"></label>
+      <label>Duração (min) <input id="it-duration" type="number" min="0" step="15"></label>
+      <label>Custo <input id="it-cost" type="number" min="0" step="0.5"></label>
+    </div>
+    <label>Morada <input id="it-address"></label>
+    <div class="row">
+      <label>Reserva / bilhete nº <input id="it-ref" placeholder="Código de confirmação"></label>
+      <label>Link <input id="it-url" placeholder="https://…"></label>
+    </div>
+    <label>Notas <textarea id="it-notes" rows="3"></textarea></label>
+    <div class="dlg-actions">
+      <button class="btn ghost danger" type="button" id="btn-item-delete">Apagar</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" type="button" id="btn-item-cancel">Cancelar</button>
+      <button class="btn" type="button" id="btn-item-save">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-place" class="dlg wide">
+  <div class="dlg-inner" id="place-body"></div>
+</dialog>
+
+<input type="file" id="file-import" accept="application/json" hidden>
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

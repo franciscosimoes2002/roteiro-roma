@@ -1,0 +1,8 @@
+# Guardar tudo com quebras de linha LF, para o repositório ficar igual
+# em qualquer sistema.
+* text=auto eol=lf
+
+# Os ficheiros .bat do Windows precisam mesmo de CRLF.
+*.bat text eol=crlf
+
+*.png binary

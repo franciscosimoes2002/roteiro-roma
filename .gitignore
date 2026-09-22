@@ -1,0 +1,14 @@
+# Dependências (a app não tem nenhuma, mas por precaução)
+node_modules/
+
+# Vercel
+.vercel/
+
+# Cópias do roteiro exportadas pela app — são pessoais e mudam a toda a hora
+*.ics
+backups/
+
+# Lixo do sistema
+Thumbs.db
+desktop.ini
+.DS_Store
